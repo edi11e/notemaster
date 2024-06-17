@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recordatorio de Tareas</title>
     <style>
+        /* Estilos CSS para tu aplicación */
         body {
             font-family: Arial, sans-serif;
             background: url('imagen.jpg') no-repeat center center fixed;
@@ -122,20 +123,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const formTarea = document.getElementById('form-tarea');
-            const listaTareas = document.getElementById('lista-tareas');
-            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
-
-            // Verificar si el navegador soporta Service Workers y Notificaciones
-            if ('serviceWorker' in navigator && 'Notification' in window) {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(function(registration) {
-                        console.log('Service Worker registrado con éxito:', registration);
-                    })
-                    .catch(function(error) {
-                        console.log('Error al registrar el Service Worker:', error);
-                    });
-
+            // Solicitar permiso para enviar notificaciones
+            if ('Notification' in window) {
                 Notification.requestPermission().then(function(result) {
                     if (result === 'granted') {
                         console.log('Permiso de notificaciones concedido.');
@@ -143,9 +132,11 @@
                         console.log('Permiso de notificaciones denegado.');
                     }
                 });
-            } else {
-                alert('Las notificaciones push no son compatibles con tu navegador o servidor.');
             }
+
+            const formTarea = document.getElementById('form-tarea');
+            const listaTareas = document.getElementById('lista-tareas');
+            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
 
             formTarea.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -156,6 +147,7 @@
                 const fecha = document.getElementById('fecha').value;
                 const hora = document.getElementById('hora').value;
 
+                // Crear objeto tarea
                 const tarea = {
                     descripcion: descripcion,
                     materia: materia,
@@ -165,10 +157,12 @@
                     completada: false
                 };
 
+                // Agregar tarea a la lista y al almacenamiento local
                 tareas.push(tarea);
                 localStorage.setItem('tareas', JSON.stringify(tareas));
                 agregarTareaDOM(tarea);
 
+                // Limpiar formulario
                 formTarea.reset();
             });
 
@@ -216,8 +210,8 @@
             }
 
             function mostrarNotificacion(tarea) {
-                if ('serviceWorker' in navigator && 'PushManager' in window) {
-                    navigator.serviceWorker.ready.then(function(registration) {
+                if (Notification.permission === 'granted') {
+                    navigator.serviceWorker.getRegistration().then(function(registration) {
                         registration.showNotification('Recordatorio de Tarea', {
                             body: `Es hora de tu tarea: ${tarea.descripcion}`,
                             tag: tarea.descripcion,
@@ -229,17 +223,26 @@
                             ]
                         });
                     });
-                } else {
-                    alert(`Es hora de tu tarea: ${tarea.descripcion}`);
                 }
             }
 
-            tareas.forEach(tarea => {
-                agregarTareaDOM(tarea);
-                programarNotificacion(tarea);
-            });
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registrado con éxito:', registration);
+                    })
+                    .catch(function(error) {
+                        console.log('Error al registrar el Service Worker:', error);
+                    });
+            }
+
+            if (tareas) {
+                tareas.forEach(tarea => {
+                    agregarTareaDOM(tarea);
+                    programarNotificacion(tarea);
+                });
+            }
         });
     </script>
 </body>
 </html>
-
