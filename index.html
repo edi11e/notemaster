@@ -134,6 +134,16 @@
                 });
             }
 
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registrado con éxito:', registration);
+                    })
+                    .catch(function(error) {
+                        console.log('Error al registrar el Service Worker:', error);
+                    });
+            }
+
             const formTarea = document.getElementById('form-tarea');
             const listaTareas = document.getElementById('lista-tareas');
             let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
@@ -164,6 +174,9 @@
 
                 // Limpiar formulario
                 formTarea.reset();
+
+                // Programar notificación
+                programarNotificacion(tarea);
             });
 
             function agregarTareaDOM(tarea) {
@@ -191,8 +204,6 @@
 
                 li.style.textDecoration = tarea.completada ? 'line-through' : 'none';
                 listaTareas.appendChild(li);
-
-                programarNotificacion(tarea);
             }
 
             function programarNotificacion(tarea) {
@@ -210,30 +221,18 @@
             }
 
             function mostrarNotificacion(tarea) {
-                if (Notification.permission === 'granted') {
-                    navigator.serviceWorker.getRegistration().then(function(registration) {
-                        registration.showNotification('Recordatorio de Tarea', {
-                            body: `Es hora de tu tarea: ${tarea.descripcion}`,
-                            tag: tarea.descripcion,
-                            data: { url: window.location.href },
-                            requireInteraction: true,
-                            actions: [
-                                { action: 'view', title: 'Ver' },
-                                { action: 'close', title: 'Cerrar' }
-                            ]
-                        });
+                navigator.serviceWorker.ready.then(function(registration) {
+                    registration.showNotification('Recordatorio de Tarea', {
+                        body: `Es hora de tu tarea: ${tarea.descripcion}`,
+                        tag: tarea.descripcion,
+                        data: { url: window.location.href },
+                        requireInteraction: true,
+                        actions: [
+                            { action: 'view', title: 'Ver' },
+                            { action: 'close', title: 'Cerrar' }
+                        ]
                     });
-                }
-            }
-
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(function(registration) {
-                        console.log('Service Worker registrado con éxito:', registration);
-                    })
-                    .catch(function(error) {
-                        console.log('Error al registrar el Service Worker:', error);
-                    });
+                });
             }
 
             if (tareas) {
