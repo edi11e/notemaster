@@ -141,48 +141,67 @@
         <button id="btnMostrarNotificacion">Mostrar Notificación</button>
     </div>
 
-    <script>
+ <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const btnMostrarNotificacion = document.getElementById('btnMostrarNotificacion');
+            const formTarea = document.getElementById('form-tarea');
 
-            btnMostrarNotificacion.addEventListener('click', function() {
-                if (Notification.permission === 'granted') {
-                    programarNotificacion();
-                } else if (Notification.permission !== 'denied') {
-                    Notification.requestPermission().then(function(permission) {
-                        if (permission === 'granted') {
-                            programarNotificacion();
-                        }
-                    });
-                }
+            formTarea.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const descripcion = document.getElementById('descripcion').value;
+                const fecha = document.getElementById('fecha').value;
+                const hora = document.getElementById('hora').value;
+
+                const tarea = {
+                    descripcion: descripcion,
+                    fecha: fecha,
+                    hora: hora
+                };
+
+                programarNotificacion(tarea);
+
+                // Simulación de almacenamiento de la tarea en localStorage o servidor
+                console.log('Tarea agregada:', tarea);
+
+                // Limpia el formulario después de agregar la tarea
+                formTarea.reset();
             });
 
-            function programarNotificacion() {
-                const fechaTarea = new Date(); // Simulación de la fecha y hora de la tarea
-                fechaTarea.setSeconds(fechaTarea.getSeconds() + 5); // Ejemplo: 5 segundos desde ahora
-
+            function programarNotificacion(tarea) {
                 const ahora = new Date();
+                const fechaTarea = new Date(`${tarea.fecha}T${tarea.hora}`);
 
+                // Calcula la diferencia de tiempo en milisegundos
                 const diferencia = fechaTarea.getTime() - ahora.getTime();
 
                 if (diferencia > 0) {
                     setTimeout(function() {
-                        mostrarNotificacion();
+                        mostrarNotificacion(tarea);
                     }, diferencia);
+                } else {
+                    console.log('La fecha y hora de la tarea ya han pasado.');
                 }
             }
 
-            function mostrarNotificacion() {
-                const notification = new Notification('Tarea Pendiente', {
-                    body: 'Recuerda completar la tarea de matemáticas.',
-                    icon: 'icono.png'
-                });
+            function mostrarNotificacion(tarea) {
+                if (Notification.permission === 'granted') {
+                    const notification = new Notification('Tarea Pendiente', {
+                        body: `Recuerda completar la tarea: ${tarea.descripcion}`,
+                        icon: 'icono.png'
+                    });
 
-                notification.onclick = function() {
-                    window.focus(); // Enfoca la pestaña del navegador si está abierta
-                    notification.close(); // Cierra la notificación al hacer clic
-                    // Aquí puedes agregar la acción que deseas realizar al hacer clic en la notificación
-                };
+                    notification.onclick = function() {
+                        window.focus(); // Enfoca la pestaña del navegador si está abierta
+                        notification.close(); // Cierra la notificación al hacer clic
+                        // Aquí puedes agregar la acción que deseas realizar al hacer clic en la notificación
+                    };
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(function(permission) {
+                        if (permission === 'granted') {
+                            mostrarNotificacion(tarea);
+                        }
+                    });
+                }
             }
         });
     </script>
