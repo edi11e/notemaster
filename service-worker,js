@@ -1,0 +1,33 @@
+self.addEventListener('install', function(event) {
+    console.log('Service Worker instalado');
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', function(event) {
+    console.log('Service Worker activado');
+});
+
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+    if (event.action === 'view') {
+        clients.openWindow(event.notification.data.url);
+    }
+});
+
+self.addEventListener('push', function(event) {
+    let data = { title: 'Recordatorio', body: 'Tienes una tarea pendiente', url: '/' };
+
+    if (event.data) {
+        data = event.data.json();
+    }
+
+    const options = {
+        body: data.body,
+        icon: 'icon.png',
+        data: { url: data.url }
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
+});
